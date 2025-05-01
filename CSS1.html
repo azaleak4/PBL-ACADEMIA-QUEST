@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cutscene Viewer with Styled Dialogue</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    #background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    #background.visible {
+      opacity: 1;
+    }
+
+    #characters {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .character {
+      position: absolute;
+      bottom: 0;
+      height: 70%;
+      transition: transform 0.3s ease;
+    }
+
+    #char-left { left: 5%; }
+    #char-right { right: 5%; }
+
+    /* BOUNCE animation */
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      30%  { transform: translateY(-25px); }
+      50%  { transform: translateY(0); }
+      70%  { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+
+    .bounce {
+      animation: bounce 0.6s ease;
+    }
+
+    #dialogue-box {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 900px;
+      background: rgba(20, 20, 20, 0.85);
+      color: #fff;
+      border: 2px solid #ffffff33;
+      border-radius: 15px;
+      padding: 20px 30px;
+      box-shadow: 0 0 20px #000000aa;
+      z-index: 2;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    #dialogue-box:hover {
+      background: rgba(30, 30, 30, 0.95);
+      border-color: #ffffff55;
+    }
+
+    #name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #ffd369;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    #text {
+      color: #e0e0e0;
+    }
+
+    #scene-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 3;
+      font-size: 14px;
+    }
+
+    #continue-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+      animation: blink 1s infinite;
+      opacity: 0.7;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 0.2; }
+    }
+
+    @keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-30px); }
+  60%  { transform: translateY(0); }
+  100% { transform: translateY(-15px); }
+    }
+
+  .fadeOut {
+  animation: fadeOutAnim 2s forwards;
+}
+
+@keyframes fadeOutAnim {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+
+.character.bounce {
+  animation: bounce 0.6s ease;
+}
+
+  </style>
+</head>
+<body>
+  <div id="scene">
+    <div id="scene-label"></div>
+    <img id="background" src="" alt="Background">
+    <div id="characters">
+      <img id="char-left" class="character" src="" alt="Left Character">
+      <img id="char-right" class="character" src="" alt="Right Character">
+    </div>
+    <div id="dialogue-box" onclick="nextLine()">
+      <div id="name"></div>
+      <div id="text"></div>
+      <div id="continue-indicator">▶️</div>
+    </div>
+  </div>
+
+
+<script>
+    
+    const cutscene = [
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "Welcome!  Call me Codepus. The professor created me to guide you students in learning computer science. Here, you will learn about Computer Science! Computer Science is very important to us because it is the cause of our technology work perfectly!. You came to play this game because you don't understand Computer Science? or maybe you had some problems on what it is used for? Well today, I will help you understand the world of Computer Science!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen",
+        text: "Woah!! This is cool, but first... What are we gonna learn here?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "There are lots of things that we can learn about Computer Science but today, we will be learning about Programming Languages and its uses!"
+      },
+      {
+
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen",
+        text: "What's that??"
+      },
+      {
+        background: "golongan.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "Programming languages are how we talk to computers. Each one has a purpose."
+      },
+      {
+        background: "golongan.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen",
+        text: "Ooooo that's interesting!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "Right?? Computer Science can be interesting if we learn it in a fun way!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen",
+        text: "Are we gonna learn Programming Languages only?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "Yep!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen",
+        text: "Aww I expected we could learn other things too :("
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "I'm sorry I couldn't!! We have to master this first, the rest comes after. But hey, atleast we got new things to learn ya know? :)"
+},
+      {
+
+
+background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen",
+        text: "It's alright I guess. Can we start?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "Absolutely! There are lots of Programming Languages such as HTML, CSS, JavaScript, PHP, Phyton and SQL. "
+      },
+      {
+        background: "HTML.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: " HTML builds the basic layout of a webpage, like the headings, paragraphs, and images."
+      },
+      {
+        background: "CSS.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "CSS adds colors, fonts, and designs to make the page look good."
+      },
+      {
+        background: "JAVASCRIPT.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "JavaScript makes the page interactive, like clicking buttons or sliding images."
+      },  
+      {
+        background: "PHP.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: " PHP controls what happens behind the website, like sending forms or logging in."
+      },  
+      {
+        background: "PYTHON.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus",
+        text: "Python is used for smart tasks like AI, making games, or automating things."
+      },
+      {
+        background: "SQL.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "SQL is used to store, find, and manage data in a website or app."
+      },  
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen",
+        text: "Woah!! May I see an example for each of the programming language so it will be easier for me to understand how their coding should look like?"
+      },
+      {
+        background: "kata nama.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "Yes! for HTML, <h1>Hello World</h1> makes a big heading on the page.  "
+      }, 
+      {
+        background: "kata nama.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: " CSS – h1 { color: red; } makes that heading red."
+      }, 
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "JavaScript – alert(''Welcome!'') shows a popup when the page loads."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "PHP – <?php echo ''Hello from server!''; ?> shows a message from the server."
+      },
+      {
+
+background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "Python – print(''Hello, world!'') prints text in programs or games."
+      },
+      {
+        background: "kata kerja.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "SQL – SELECT * FROM users; gets all data from a users table."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen ",
+        text: "WOW! that's what it do?? That looks so fun! I may not understand it that much but I do hope that I could coding like you did!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "Eheh do not compliment me, I always do mistake while I code. Remember, not everything should be perfect!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Allen ",
+        text: "It doesn't matter at all to me. Well I better get going now, Thank you so much and BYE!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/Codepus.png" },
+        name: "Codepus ",
+        text: "Alright you're welcome, see ya soon! :)"
+      },
+    ];
+
+  const backgroundEl = document.getElementById("background");
+  const charLeft = document.getElementById("char-left");
+  const charRight = document.getElementById("char-right");
+  const sceneLabel = document.getElementById("scene-label");
+  const dialogueBox = document.getElementById("dialogue-box");
+  const nameEl = document.getElementById("name");
+  const textEl = document.getElementById("text");
+
+  let index = 0;
+  let isTyping = false;
+  let typingTimeout;
+
+  function showScene(scene) {
+    backgroundEl.classList.remove("visible");
+    setTimeout(() => {
+      backgroundEl.src = scene.background;
+      backgroundEl.onload = () => backgroundEl.classList.add("visible");
+
+      charLeft.src = scene.characters.left;
+      charRight.src = scene.characters.right;
+
+      // Bouncing effect for speaker
+      if (scene.name === "Codepus") {
+        charRight.classList.add("bounce");
+        setTimeout(() => charRight.classList.remove("bounce"), 600);
+      } else if (scene.name === "Allen") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }
+
+      sceneLabel.textContent = scene.scene;
+      nameEl.textContent = scene.name;
+      textEl.textContent = "";
+      dialogueBox.style.display = "block";
+
+      typeText(scene.text);
+    }, 400);
+  }
+
+  function typeText(text) {
+    let charIndex = 0;
+    isTyping = true;
+    textEl.textContent = "";
+
+    function typeNextChar() {
+      if (charIndex < text.length) {
+        textEl.textContent += text.charAt(charIndex);
+        charIndex++;
+        typingTimeout = setTimeout(typeNextChar, 25); // typing speed
+      } else {
+        isTyping = false;
+      }
+    }
+
+    typeNextChar();
+  }
+
+  function nextLine() {
+    if (isTyping) {
+      clearTimeout(typingTimeout);
+      textEl.textContent = cutscene[index].text;
+      isTyping = false;
+      return;
+    }
+
+
+index++;
+    if (index < cutscene.length) {
+      showScene(cutscene[index]);
+    } else {
+      dialogueBox.style.display = "none";
+      backgroundEl.classList.add("fadeOut");
+    }
+  }
+
+  // Start with the first scene
+  showScene(cutscene[index]);
+
+  </script>
+</body>
+</html>
