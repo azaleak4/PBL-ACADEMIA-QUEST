@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Math Battle Game</title>
+  <link rel="preload" as="video" href="Massets/punch.mp4" type="video/mp4">
+<link rel="preload" as="video" href="Massets/kick.mp4" type="video/mp4">
+<link rel="preload" as="video" href="Massets/special.mp4" type="video/mp4">
+  <style>
+    body { font-family: Arial; text-align: center; background-color: #000; margin: 0; padding: 0; }
+    #game-screen > div { display: none; position: relative; height: 100vh; }
+    .show { display: block !important; }
+    .center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    .sprite {
+      position: absolute;
+      bottom: 0;
+      width: 200px;
+      height: auto;
+    }
+
+    #player-sprite { left: 50px; }
+    #enemy-sprite { right: 50px; }
+
+    #question-img { width: 40rem; margin-top: 5rem; }
+    .answer-img { width: 25rem; margin: 2rem; cursor: pointer; }
+
+    video, img.bg {
+      width: 100%;
+      height: 100vh;
+      object-fit: cover;
+    }
+
+    #myVideo {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .attack-button {
+  width: 25rem;
+  margin: 1rem;
+  cursor: pointer;
+}
+
+.attack{
+  margin-top: 15rem;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+#hp-display {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+#hp-display img {
+  width: 2rem;
+  margin-right: 1px;
+  visibility: hidden;
+  justify-content: left;
+  align-items: left;
+}
+
+
+
+</style>
+</head>
+<body>
+
+  <div id="hp-display">
+    <img id="heart1" src="Massets/heart.png">
+    <img id="heart2" src="Massets/heart.png">
+    <img id="heart3" src="Massets/heart.png">
+    <img id="heart4" src="Massets/heart.png">
+    <img id="heart5" src="Massets/heart.png">
+  </div>
+
+<div id="game-screen">
+
+ 
+
+  <!-- 1. Intro Animation -->
+  <div id="intro" class="show">
+    <video id="intro-video" autoplay muted>
+      <source src="Massets/startinggame.mp4" type="video/mp4">
+    </video>
+    <p id="fallback-text" style="display: none; color: white;">Press ➡️ to continue</p>
+  </div>
+
+  <!-- 2. Enemy Appears -->
+  <div id="enemy-appear">
+    <img src="Massets/hallway2.png" class="bg" alt="enemy scene">
+    <img id="player-sprite" class="sprite" src="Massets/spriteb1.png" alt="Player">
+    <img id="enemy-sprite" class="sprite" src="Massets/entity1.png" alt="Enemy">
+  </div>
+
+  <!-- 3. Question Phase -->
+  <div id="question-phase">
+    <img id="question-img" src="Massets/hallway2.png" alt="Question">
+    <div id="answer-buttons"></div>
+  </div>
+
+  <!-- 4. Attack Phase -->
+  <!-- Old -->
+<!-- <button onclick="performAttack('Punch')">1️⃣ Punch</button> -->
+
+<!-- New -->
+<div id="attack-phase">
+  <div class="attack">
+    <img src="Massets/punch.png" class="attack-button" onclick="performAttack('Punch')">
+    <img src="Massets/kick.png" class="attack-button" onclick="performAttack('Kick')">
+    <img src="Massets/special.png" class="attack-button" onclick="performAttack('Special')">
+  </div>
+</div>
+
+
+  <!-- 5. Game Over -->
+  <div id="game-over">
+    <img src="Massets/rc3.jpg" class="bg" alt="Game Over">
+    <div class="center">
+      <button onclick="restartGame()">Retry</button>
+      <button onclick="showMenu()">Back to Menu</button>
+    </div>
+  </div>
+
+  <!-- 6. Stage Clear -->
+  <div id="stage-clear">
+    <img src="Massets/rc2.jpg" class="bg" alt="Stage Clear">
+    <div class="center">
+      <button onclick="showMenu()">Back to Menu</button>
+      <button onclick="nextStage()">Next Stage</button>
+    </div>
+</div>
+
+
+   
+
+  </div>
+
+  <!--<video id="myVideo" width="640" height="360">
+    <source src="Massets/run.mp4" type="video/mp4">
+  </video> -->
+  
+</div>
+
+<video id="myVideo" style="display: none;" preload="auto">
+  <source src="" type="video/mp4">
+</video>
+
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+
+<!-- Script -->
+<script>
+
+let hp = 5;
+
+function updateHPDisplay() {
+  for (let i = 1; i <= 5; i++) {
+    const heart = document.getElementById(`heart${i}`);
+    heart.style.visibility = (i <= hp) ? "visible" : "hidden";
+  }
+}
+
+
+  let currentQuestion = 0;
+  hp = 5; updateHPDisplay();
+
+
+  const attackVideos = {
+  "Punch": "Massets/run.mp4",
+  "Kick": "Massets/run.mp4",
+  "Special": "Massets/run.mp4"
+}
+
+
+
+const enemySprites = [ 
+  { src: "Massets/transparent1.png", width: 315, height: 325},
+  { src: "Massets/transparent1.png", width: 300, height:  325},
+  { src: "Massets/transparent1.png", width: 300, height: 325},
+  { src: "Massets/transparent1.png", width: 300, height: 325},
+  { src: "Massets/transparent1.png", width: 300, height: 325}
+];
+
+const questions = [
+  {
+    questionImg: "Massets/MQ31.png",
+    answers: [
+      { img: "Massets/MQA311.png", value: 423 },
+      { img: "Massets/MQA312.png", value: 424 },
+      { img: "Massets/MQA313.png", value: 414 }
+    ],
+    correct: 423
+  },
+  {
+    questionImg: "Massets/MQ32.png",
+    answers: [
+      { img: "Massets/MQA321.png", value: 6 },
+      { img: "Massets/MQA322.png", value: 8 },
+      { img: "Massets/MQA323.png", value: 10 }
+    ],
+    correct: 8
+  },
+  {
+    questionImg: "Massets/MQ33.png",
+    answers: [
+      { img: "Massets/MQA331.png", value: 2 },
+      { img: "Massets/MQA332.png", value: 3 },
+      { img: "Massets/MQA333.png", value: 4 }
+    ],
+    correct: 4
+  },
+  {
+    questionImg: "Massets/MQ34.png",
+    answers: [
+      { img: "Massets/MQA341.png", value: 5 },
+      { img: "Massets/MQA342.png", value: 6 },
+      { img: "Massets/MQA343.png", value: 7 }
+    ],
+    correct: 6
+  },
+  {
+    questionImg: "Massets/MQ35.png",
+    answers: [
+      { img: "Massets/MQA351.png", value: 9 },
+      { img: "Massets/MQA352.png", value: 11 },
+      { img: "Massets/MQA353.png", value: 10 }
+    ],
+    correct: 9
+  }
+];
+
+
+
+  function showScreen(id) {
+    document.querySelectorAll("#game-screen > div").forEach(div => div.classList.remove("show"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("show");
+  }
+
+
+  const enemyImg = document.getElementById("enemy-sprite");
+enemyImg.src = enemySprites[currentQuestion].src;
+enemyImg.style.width = enemySprites[currentQuestion].width + "px";
+enemyImg.style.height = enemySprites[currentQuestion].height + "px";
+
+  
+  function showQuestion() {
+  if (currentQuestion >= 5) {
+    showScreen("stage-clear");
+    return;
+  }
+
+  const q = questions[currentQuestion];
+
+  showScreen("enemy-appear");
+
+  // Set current enemy
+  const enemyImg = document.getElementById("enemy-sprite");
+enemyImg.src = enemySprites[currentQuestion].src;
+enemyImg.style.width = enemySprites[currentQuestion].width + "px";
+
+  setTimeout(() => {
+    showScreen("question-phase");
+    document.getElementById("question-img").src = q.questionImg;
+
+    const buttonsDiv = document.getElementById("answer-buttons");
+    buttonsDiv.innerHTML = "";
+
+    q.answers.forEach(ans => {
+      const imgBtn = document.createElement("img");
+      imgBtn.src = ans.img;
+      imgBtn.classList.add("answer-img");
+      imgBtn.onclick = () => checkAnswer(ans.value);
+      buttonsDiv.appendChild(imgBtn);
+    });
+  }, 25); // 2-second delay
+}
+
+  function checkAnswer(ans) {
+  const correct = questions[currentQuestion].correct;
+  if (ans === correct) {
+    showScreen("attack-phase");
+  } else {
+    hp--;
+    updateHPDisplay();  // 👈 Update the UI
+    alert("Wrong! HP -1. Remaining HP: " + hp);
+    if (hp <= 0) {
+      showScreen("game-over");
+    } else {
+      currentQuestion++;
+      showScreen("enemy-appear");
+      setTimeout(showQuestion, 1000);
+    }
+  }
+}
+
+  function nextq1() {
+  const video = document.getElementById("myVideo");
+
+  // Optional: hide controls and autoplay only once
+  video.controls = false;
+  video.loop = false;
+  video.currentTime = 0;
+
+  // Play the video
+  video.play().then(() => {
+    console.log("🎬 Video started playing");
+  }).catch(err => {
+    console.error("❌ Video play failed:", err);
+  });
+
+  // Optional: do something after video ends
+  video.onended = () => {
+    console.log("✅ Video finished");
+    showScreen("enemy-appear");
+    setTimeout(showQuestion, 1000);
+
+    // e.g. startGame(); or showNextScene();
+  };
+}
+
+function performAttack(type) {
+  const video = document.getElementById("myVideo");
+  const source = video.querySelector("source");
+
+  if (!video || !source) return;
+
+  // Set and play attack video
+  source.src = attackVideos[type] || "";
+  video.load();
+  video.style.display = "block";
+  video.play();
+
+  video.onended = () => {
+    // After attack video ends, play the "walk forward" video
+    source.src = "Massets/run.mp4"; // <- your walk forward video
+    video.load();
+    video.play();
+
+    video.onended = () => {
+      // After walking animation ends, continue to next question
+      video.style.display = "none";
+      currentQuestion++;
+
+      if (currentQuestion < questions.length) {
+        showScreen("enemy-appear");
+        setTimeout(showQuestion, 1000); // or adjust delay here
+      } else {
+        showScreen("stage-clear");
+      }
+    };
+  };
+}
+
+function startGame() {
+  console.log("✅ Starting game...");
+  hp = 5; // reset
+  updateHPDisplay(); // show it fresh
+  document.getElementById("intro").style.display = "none";
+  showScreen("enemy-appear");
+  setTimeout(showQuestion, 1000);
+}
+
+
+  window.showQuestion = showQuestion;
+  window.startGame = startGame;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    showScreen("intro");
+    const video = document.getElementById("intro-video");
+    const fallbackText = document.getElementById("fallback-text");
+
+    video.play().then(() => {
+      console.log("🎬 Video is playing...");
+      video.onended = () => {
+        console.log("✅ Video ended.");
+        startGame();
+      };
+    }).catch(err => {
+      console.warn("⚠️ Autoplay failed:", err);
+      fallbackText.style.display = "block";
+    });
+
+    // ✅ Fallback key for starting game
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" && document.getElementById("intro").classList.contains("show")) {
+        console.log("➡️ Right arrow pressed. Starting game.");
+        startGame();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

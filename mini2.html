@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Typing Speed Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Pixelify Sans', cursive;
+      background-color: #fcf8e8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .typing-container {
+      border: 4px solid #444;
+      background-color: #fffbe6;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 700px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .typing-container h2 {
+      text-align: center;
+      color: #333;
+    }
+    #quote {
+      font-size: 1.2rem;
+      margin: 20px 0;
+      padding: 15px;
+      border: 2px dashed #aaa;
+      background-color: #fff;
+      border-radius: 10px;
+    }
+    #input {
+      width: 100%;
+      font-size: 1rem;
+      padding: 10px;
+      margin-top: 10px;
+      border: 2px solid #333;
+      border-radius: 5px;
+    }
+    #result {
+      font-weight: bold;
+      margin-top: 15px;
+      text-align: center;
+      color: #006400;
+    }
+
+  </style>
+</head>
+<body>
+
+    <!-- Font Awesome CDN for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<!-- Go Back Arrow Button -->
+<a href="minigame.html" title="Go Back" style="
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 2rem;
+  color: #444;
+  text-decoration: none;
+">
+  <i class="fas fa-arrow-left"></i>
+</a>
+
+      
+  <div class="typing-container">
+    <h2>🧑‍🏫 Typing Speed Challenge</h2>
+    <p id="quote">Loading...</p>
+    <textarea id="input" rows="4" placeholder="Start typing here..."></textarea>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const sentences = [
+  "The teacher wrote the equation on the blackboard.",
+  "Reading books expands your imagination and vocabulary.",
+  "We took notes diligently during the science lecture.",
+  "The school bell rang and everyone rushed to class.",
+  "History teaches us important lessons from the past.",
+  "She solved the math problem with perfect accuracy.",
+  "Our school library has thousands of interesting books.",
+  "Practice tests help prepare us for final exams.",
+  "The students lined up for the morning assembly.",
+  "Art class is where creativity truly shines bright.",
+  "He brought his lunch in a superhero lunchbox.",
+  "In PE class, we played a game of dodgeball.",
+  "Geography helps us understand the world we live in.",
+  "Our homework was to write an essay about nature.",
+  "The principal announced the winners of the spelling bee.",
+  "Learning a new language can be challenging and fun.",
+  "The science lab smelled like vinegar and baking soda.",
+  "She drew a colorful diagram of the solar system.",
+  "Our biology teacher brought a real skeleton to class.",
+  "I packed my backpack with books, pens, and snacks.",
+  "The debate team practiced for the interschool competition.",
+  "We celebrated Teacher's Day with songs and thank-you cards.",
+  "During recess, we played tag and climbed the jungle gym.",
+  "He sharpened his pencil before starting the test.",
+  "Cursive handwriting is still taught in some schools.",
+  "We used a microscope to observe plant cells closely.",
+  "Our classroom is decorated with motivational posters.",
+  "Math quizzes are held every Friday without fail.",
+  "She read aloud from the textbook with great clarity.",
+  "We sang the national anthem during morning prayer.",
+  "The science fair project involved growing crystals in jars.",
+  "I highlighted important points with my yellow highlighter.",
+  "The librarian helped me find a mystery novel.",
+  "Our school trip was to the local museum of art.",
+  "He solved the crossword puzzle faster than anyone else.",
+  "School uniforms keep everyone looking neat and equal.",
+  "We performed a play about the importance of recycling.",
+
+
+"They used graph paper to draw precise geometry shapes.",
+  "Group projects teach teamwork and communication skills.",
+  "A fire drill happened just before lunch break.",
+  "The bell schedule was posted on the classroom wall.",
+  "We planted flowers in the school garden during science class.",
+  "The classroom globe spun gently as we studied continents.",
+  "She received a gold star for perfect attendance.",
+  "He gave a presentation on the history of computers.",
+  "During lab, we mixed chemicals to see reactions.",
+  "Our teacher told a funny story to explain gravity.",
+  "The whiteboard markers were all out of ink.",
+  "The janitor cleaned the hallway after school ended.",
+  "Everyone cheered as the chess club won first place.",
+  "Fareez fell off a chair.",
+  "2K4 pro",
+  "Chemistry best doh",
+];
+
+
+    const quoteEl = document.getElementById('quote');
+    const inputEl = document.getElementById('input');
+    const resultEl = document.getElementById('result');
+
+    let startTime;
+    let ended = false;
+
+    function newQuote() {
+      const randomIndex = Math.floor(Math.random() * sentences.length);
+      quoteEl.textContent = sentences[randomIndex];
+      inputEl.value = '';
+      resultEl.textContent = '';
+      ended = false;
+      startTime = null;
+    }
+
+    newQuote();
+
+    inputEl.addEventListener('input', function () {
+      if (!startTime) startTime = new Date().getTime();
+
+      if (inputEl.value.trim() === quoteEl.textContent) {
+        const endTime = new Date().getTime();
+        const timeTaken = (endTime - startTime) / 1000; // seconds
+        const wordCount = quoteEl.textContent.split(' ').length;
+        const wpm = Math.round((wordCount / timeTaken) * 60);
+        resultEl.innerHTML = `🎉 You typed at <strong>${wpm} WPM</strong> in ${timeTaken.toFixed(2)} seconds!`;
+
+        ended = true;
+        setTimeout(newQuote, 3000); // new quote after 3 seconds
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>School Memory Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap" rel="stylesheet">
+
+  <h1>Memory Card Game!</h1>
+  <br>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Pixelify Sans', cursive;
+      background-image: url('https://cdn.pixabay.com/photo/2016/11/29/03/53/blackboard-1866843_1280.jpg');
+      background-size: cover;
+      background-position: center;
+      color: black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-top: 20px;
+    }
+    h1 {
+      font-size: 3rem;
+      color: #4CAF50;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin-bottom: 20px;
+    }
+    .info {
+      margin-bottom: 20px;
+      font-size: 24px;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 15px 25px;
+      border-radius: 8px;
+      border: 2px solid #4CAF50;
+      font-weight: bold;
+    }
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 130px);
+      grid-template-rows: repeat(3, 130px);
+      gap: 12px;
+      margin-bottom: 20px;
+      border: 4px solid #4CAF50;
+      border-radius: 15px;
+      padding: 15px;
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+    .card {
+      width: 130px;
+      height: 130px;
+      perspective: 1000px;
+      position: relative;
+      cursor: pointer;
+      border: 3px solid #4CAF50;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      backface-visibility: hidden;
+    }
+    .card-front {
+      background-color: #fffacd;
+      border: 2px dashed #4CAF50;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      color: #333;
+    }
+    .card-back {
+      background-size: cover;
+      background-position: center;
+      transform: rotateY(180deg);
+    }
+    .card.matched {
+      pointer-events: none;
+      border-color: #FFD700;
+    }
+    #restart {
+      padding: 12px 22px;
+      font-size: 20px;
+      border: none;
+      border-radius: 10px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      display: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    #restart:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+    #restart:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body>
+    <!-- Font Awesome CDN for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<!-- Go Back Arrow Button -->
+<a href="minigame.html" title="Go Back" style="
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 2rem;
+  color: #444;
+  text-decoration: none;
+">
+  <i class="fas fa-arrow-left"></i>
+</a>
+
+  <div class="info">
+    <span id="timer">Time: 60s</span> 
+  </div>
+  <div class="game-board"></div>
+  <button id="restart">Play Again</button>
+
+  <!-- Audio Effects -->
+  <audio id="flipSound" src="https://www.fesliyanstudios.com/play-mp3/387"></audio>
+  <audio id="matchSound" src="https://www.fesliyanstudios.com/play-mp3/6677"></audio>
+  <audio id="winSound" src="https://www.fesliyanstudios.com/play-mp3/6674"></audio>
+  <audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/17/audio_92f6b6a5c1.mp3?filename=arcade-music-loop-110150.mp3" loop autoplay></audio>
+
+  <script>
+    const gameBoard = document.querySelector('.game-board');
+    const timerEl = document.getElementById('timer');
+    const restartBtn = document.getElementById('restart');
+
+
+const flipSound = document.getElementById('flipSound');
+    const matchSound = document.getElementById('matchSound');
+    const winSound = document.getElementById('winSound');
+    const bgMusic = document.getElementById('bgMusic');
+
+    let flippedCards = [];
+    let matchedCards = 0;
+    let timer;
+    let timeLeft = 60;
+
+    const images = [
+      'https://logospng.org/download/html-5/logo-html-5-2048.png',
+      'https://i.pinimg.com/originals/b5/e2/84/b5e284bedffd5883050cfb5a28fd83ed.png',
+      'https://www.kindpng.com/picc/m/396-3968185_minecraft-book-png-transparent-png.png',
+      'https://static.vecteezy.com/system/resources/previews/010/438/507/large_2x/pixel-trophy-cup-free-vector.jpg',
+      'https://logos-world.net/wp-content/uploads/2023/02/JavaScript-Emblem.png',
+      'https://logospng.org/download/css-3/logo-css-3-1536.png'
+    ];
+
+    function createCards() {
+      gameBoard.innerHTML = '';
+      matchedCards = 0;
+      flippedCards = [];
+      restartBtn.style.display = 'none';
+
+      const allImages = [...images, ...images];
+      allImages.sort(() => Math.random() - 0.5);
+
+      allImages.forEach((imgSrc) => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.image = imgSrc;
+
+        const cardInner = document.createElement('div');
+        cardInner.classList.add('card-inner');
+
+        const front = document.createElement('div');
+        front.classList.add('card-front');
+        front.textContent = '?';
+
+        const back = document.createElement('div');
+        back.classList.add('card-back');
+        back.style.backgroundImage = `url('${imgSrc}')`;
+
+        cardInner.appendChild(front);
+        cardInner.appendChild(back);
+        card.appendChild(cardInner);
+        gameBoard.appendChild(card);
+
+        card.addEventListener('click', () => handleCardClick(card));
+      });
+    }
+
+    function handleCardClick(card) {
+      if (
+        flippedCards.length < 2 &&
+        !card.classList.contains('flipped') &&
+        !card.classList.contains('matched')
+      ) {
+        card.classList.add('flipped');
+        flipSound.currentTime = 0;
+        flipSound.play();
+        flippedCards.push(card);
+
+        if (flippedCards.length === 2) {
+          checkMatch();
+        }
+      }
+    }
+
+    function checkMatch() {
+      const [card1, card2] = flippedCards;
+      if (card1.dataset.image === card2.dataset.image) {
+        card1.classList.add('matched');
+        card2.classList.add('matched');
+        matchedCards += 2;
+        matchSound.currentTime = 0;
+        matchSound.play();
+
+        if (matchedCards === 12) {
+          clearInterval(timer);
+          setTimeout(() => {
+            winSound.play();
+            alert('You won!');
+            restartBtn.style.display = 'inline-block';
+          }, 400);
+        }
+      } else {
+        setTimeout(() => {
+          card1.classList.remove('flipped');
+          card2.classList.remove('flipped');
+        }, 900);
+      }
+      flippedCards = [];
+    }
+
+    function startTimer() {
+      timeLeft = 60;
+      timerEl.textContent = `Time: ${timeLeft}s`;
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `Time: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          alert('Time is up!');
+          restartBtn.style.display = 'inline-block';
+        }
+      }, 1000);
+    }
+
+    restartBtn.addEventListener('click', () => {
+      clearInterval(timer);
+      createCards();
+      startTimer();
+    });
+
+    // Initial game setup
+    createCards();
+    startTimer();
+    bgMusic.volume = 0.3;
+  </script>
+</body>
+</html>
