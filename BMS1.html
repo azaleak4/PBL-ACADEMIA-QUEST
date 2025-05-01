@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cutscene Viewer with Styled Dialogue</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    #background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    #background.visible {
+      opacity: 1;
+    }
+
+    #characters {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .character {
+      position: absolute;
+      bottom: 0;
+      height: 70%;
+      transition: transform 0.3s ease;
+    }
+
+    #char-left { left: 5%; }
+    #char-right { right: 5%; }
+
+    /* BOUNCE animation */
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      30%  { transform: translateY(-25px); }
+      50%  { transform: translateY(0); }
+      70%  { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+
+    .bounce {
+      animation: bounce 0.6s ease;
+    }
+
+    #dialogue-box {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 900px;
+      background: rgba(20, 20, 20, 0.85);
+      color: #fff;
+      border: 2px solid #ffffff33;
+      border-radius: 15px;
+      padding: 20px 30px;
+      box-shadow: 0 0 20px #000000aa;
+      z-index: 2;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    #dialogue-box:hover {
+      background: rgba(30, 30, 30, 0.95);
+      border-color: #ffffff55;
+    }
+
+    #name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #ffd369;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    #text {
+      color: #e0e0e0;
+    }
+
+    #scene-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 3;
+      font-size: 14px;
+    }
+
+    #continue-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+      animation: blink 1s infinite;
+      opacity: 0.7;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 0.2; }
+    }
+
+    @keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-30px); }
+  60%  { transform: translateY(0); }
+  100% { transform: translateY(-15px); }
+    }
+
+  .fadeOut {
+  animation: fadeOutAnim 2s forwards;
+}
+
+@keyframes fadeOutAnim {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+
+.character.bounce {
+  animation: bounce 0.6s ease;
+}
+
+  </style>
+</head>
+<body>
+  <div id="scene">
+    <div id="scene-label"></div>
+    <img id="background" src="" alt="Background">
+    <div id="characters">
+      <img id="char-left" class="character" src="" alt="Left Character">
+      <img id="char-right" class="character" src="" alt="Right Character">
+    </div>
+    <div id="dialogue-box" onclick="nextLine()">
+      <div id="name"></div>
+      <div id="text"></div>
+      <div id="continue-indicator">▶️</div>
+    </div>
+  </div>
+
+
+<script>
+    
+    const cutscene = [
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "Welcome! Here, you will learn about Bahasa Melayu! Bahasa Melayu can be used in our daily life especially for malaysians. You came to play this game because you don't understand Malay? or maybe you had some problems about the uses of Bahasa Melayu? Well today, I will help you understand the world of Bahasa Melayu!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "Ouhhh this looks fun! But first... What are we gonna learn here? Just curious eheh.."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "We will be learning about GOLONGAN KATA!"
+      },
+      {
+
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "What's that??"
+      },
+      {
+        background: "golongan.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "Golongan kata, or known as 'Parts of Speech' refers to the CATEGORIES OF WORDS based on their functions in a sentence."
+      },
+      {
+        background: "golongan.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "Ooooo that's interesting!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "Right?? Bahasa Melayu can be interesting if we learn it in a fun way!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "Are we gonna learn anything other than GOLONGAN KATA only?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "Nope! I guess that's pretty much it for our lesson today."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "Alright then, can we start now?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "Yeah sure!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+
+
+characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "GOLONGAN KATA have many parts, but today we will be learning about..."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "Kata Nama, Kata Kerja and Kata Adjektif only."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "What about Kata Tugas? aren't we gonna learn about Kata Tugas?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara",
+        text: "Oh! About that, we might learn it on our next lesson. But I don't promise ya about it. :)"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "Ohhhh okay! Explain about it, I want to learn Golongan Kata so bad!!"
+      },  
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Okay! Kata Nama is a noun which names a person, place, thing, or idea!"
+      },  
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "What's the examples of Kata Nama?"
+      },
+      {
+        background: "kata nama.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Kata Nama is basically everything around us such as Ali, school, book, tree! There are 2 types of nouns: Kata Nama Am and Kata Nama Khas."
+      },  
+      {
+        background: "kata nama.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen",
+        text: "Woah!! May I know what Kata Nama Am and Kata Nama Khas are in English? I can't even speak nor understand the malay language :("
+      },
+      {
+        background: "kata nama.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "It's totally fine!! Kata Nama Am in English is'Common Noun', the general names for objects or living things. It only uses lowercase letters because they are not specific names. "
+      }, 
+      {
+        background: "kata nama.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Kata Nama Khas are 'Proper Noun' which have specific names for an object or others. They mainly use capital letter at the front of each specific words to indicate that's Kata Nama Khas. They're unique!"
+      }, 
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+
+
+name: "Allen ",
+
+
+text: "Ohhhh I see! let's just say sekolah is Kata Nama Am, but Sekolah Seri Puteri is Kata Nama Khas? Because Sekolah Seri Puteri use capital letters infront of each word?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Yep! I knew that you could learn this fast! :) "
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen ",
+        text: "Thanks! Can we learn about Kata Kerja now? I wanna practice when I got back home"
+      },
+      {
+        background: "kata kerja.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Absolutely! Kata Kerja is 'verb' in English. It's a word that shows action or what someone is doing. "
+      },
+      {
+        background: "kata kerja.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Kata Kerja are divided into 3 parts which is Kata Kerja Transitif, Tak Transitif and Pasif."
+      },
+      {
+        background: "kata kerja.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen ",
+        text: "OOO what are does those 3 means in English?"
+      },
+      {
+        background: "kata kerja.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Kata Kerja Transitif is 'Transitive Verbs'. These verbs need an object to complete the meaning of a sentence. For Example: Aira Membaca Buku.Membaca (Reading) is Kata Kerja and Buku (Book) is an object. if we only put 'Aira Membaca', we don't know what Aira is reading with. That's why it's called Kata Kerja Transitif."
+      },
+      {
+        background: "kata kerja.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Kata Kerja Tak Transitif is 'Intransitive Verbs'. The verbs DO NOT need an object to complete a sentence's meaning. Basically it means the verb can stand on its own without needing anything to support its meaning. For example: Rafiq sedang berlari (Rafiq is running). Berlari is Kata Kerja Tak Transitif because the word 'berlari (running)' does not need any object to indicate what hes currently doing."
+      },
+      {
+        background: "kata kerja.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Kata Kerja Pasif means 'Passive verbs'. It’s when the action is done to the subject, instead of the subject doing the action. For example: Kereta itu dicuci oleh ayah (The car was washed by dad). The Kata kerja 'dicuci (washed)' is the action that's done to 'ayah (dad)'"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen ",
+        text: "OHHH now I understand! we’ve done kata nama, kata kerja, and even kata kerja pasif. Can we do kata adjektif now?"
+      },
+      {
+        background: "kata adjektif.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+
+text: "Of course! Kata adjektif are words that describe the qualities or states of a noun. In English, we call them 'adjectives'. There are a couple of types of Kata Adjektif, but today we learn about Adjektif Sifat (Quality), Adjektif Waktu (Time-related), Adjektif Warna (Color), Adjektif Saiz (Size) and Adjektif Perasaan (Feelings)."
+      },
+      {
+        background: "kata adjektif.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Adjektif Sifat 'Quality' describes quality or characteristics. Examples: cantik 'beautiful' kuat 'strong', pandai 'clever'"
+      },
+      {
+        background: "kata adjektif.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Adjektif Warna 'Color' describes the color of something. Examples: Merah 'Red', Hijau 'Green', Ungu 'Purple'"
+      },
+      {
+        background: "kata adjektif.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Adjektif Saiz 'Size' describes the size or measurement of something. Example: Kecil 'small', besar 'big',  Panjang 'long'"
+      },
+      {
+        background: "kata adjektif.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Adjektif Perasaan 'Feelings' describes emotions or feelings. Examples: Gembira 'happy', sedih 'sad', takut 'scared'"
+      },
+      {
+        background: "kata adjektif.jpg",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "Adjektif Waktu 'Time-related' describes duration or time. Examples: Awal 'early', lewat 'late', lama 'long time'"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Allen ",
+        text: "THAT'S ALOT!!! I hope that I could learn them all so that I could flex it to my friends! eheh just kidding. Thank you SO MUCH for teaching me about GOLONGAN KATA! Terima Kasih!! I better get going, bye!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/ainaaksara.png" },
+        name: "Aksara ",
+        text: "You're welcome! and sama-sama :D Hope we can meet again on our next lesson. Goodbye!"
+      },
+    ];
+
+  const backgroundEl = document.getElementById("background");
+  const charLeft = document.getElementById("char-left");
+  const charRight = document.getElementById("char-right");
+  const sceneLabel = document.getElementById("scene-label");
+  const dialogueBox = document.getElementById("dialogue-box");
+  const nameEl = document.getElementById("name");
+  const textEl = document.getElementById("text");
+
+  let index = 0;
+  let isTyping = false;
+  let typingTimeout;
+
+  function showScene(scene) {
+    backgroundEl.classList.remove("visible");
+    setTimeout(() => {
+      backgroundEl.src = scene.background;
+      backgroundEl.onload = () => backgroundEl.classList.add("visible");
+
+      charLeft.src = scene.characters.left;
+      charRight.src = scene.characters.right;
+
+      // Bouncing effect for speaker
+      if (scene.name === "Aksara") {
+        charRight.classList.add("bounce");
+        setTimeout(() => charRight.classList.remove("bounce"), 600);
+      } else if (scene.name === "Allen") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }
+
+sceneLabel.textContent = scene.scene;
+      nameEl.textContent = scene.name;
+      textEl.textContent = "";
+      dialogueBox.style.display = "block";
+
+      typeText(scene.text);
+    }, 400);
+  }
+
+  function typeText(text) {
+    let charIndex = 0;
+    isTyping = true;
+    textEl.textContent = "";
+
+    function typeNextChar() {
+      if (charIndex < text.length) {
+        textEl.textContent += text.charAt(charIndex);
+        charIndex++;
+        typingTimeout = setTimeout(typeNextChar, 25); // typing speed
+      } else {
+        isTyping = false;
+      }
+    }
+
+    typeNextChar();
+  }
+
+  function nextLine() {
+    if (isTyping) {
+      clearTimeout(typingTimeout);
+      textEl.textContent = cutscene[index].text;
+      isTyping = false;
+      return;
+    }
+
+    index++;
+    if (index < cutscene.length) {
+      showScene(cutscene[index]);
+    } else {
+      dialogueBox.style.display = "none";
+      backgroundEl.classList.add("fadeOut");
+    }
+  }
+
+  // Start with the first scene
+  showScene(cutscene[index]);
+
+  </script>
+</body>
+</html>
