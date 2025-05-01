@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Screen Video</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+
+        video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* Ensures the video covers the full screen */
+        }
+    </style>
+</head>
+<body>
+
+    <video id="introVideo" autoplay>
+        <source src="Academia Quest.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <script>
+        const video = document.getElementById("introVideo");
+
+        // Function to request full screen
+        function goFullScreen() {
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.mozRequestFullScreen) { // Firefox
+                video.mozRequestFullScreen();
+            } else if (video.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                video.webkitRequestFullscreen();
+            } else if (video.msRequestFullscreen) { // IE/Edge
+                video.msRequestFullscreen();
+            }
+        }
+
+        // Make the video full screen when it starts playing
+        video.addEventListener("play", goFullScreen);
+
+        // Redirect when the video ends
+        video.onended = function() {
+            window.location.href = "AQsubj.html"; // Redirect after video ends
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+        }
+        canvas {
+            font-family: 'Press Start 2P', cursive;
+        }
+        img {
+      position: absolute;
+      z-index: 5; /* Lower than canvas */
+  }
+    </style>
+</head>
+<body>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+    <script>
+
+        let bg;
+let playButton, aboutButton, creditsButton, credisButton, creditButton, aboutsButton, MoreButton;
+let popupVisible = false;
+let popupText = "";
+let bgMusic;
+let musicStarted = false;
+let AQlogo;
+let characterFrames = ["kylie1.png", "kylie2.png", "allen1.png", "allen2.png" ]; // Array to store images
+let frameIndex = 0; // Keeps track of the current frame
+let frameDelay = 6; // Controls animation speed
+let counter = 0; // 
+
+// Load assets
+function preload() {
+  bg = loadImage("AQbg2.png");  
+  bgMusic = loadSound("Minecraft.mp3"); 
+}
+
+function setup() {
+  createCanvas(windowWidth -20, windowHeight + 2);
+  textSize(20);
+  textAlign(CENTER);
+  fill(255);
+
+  AQlogo = createImg("AQlogo2.png");
+  AQlogo.position(width / 2 - 200,- AQlogo.width / 2 + 40);
+  AQlogo.size(400, 200);
+  
+
+  // Play Button
+  playButton = createImg("Massets/mathbtn.png", "Play");
+  playButton.position(width / 2 - 700, height / 2 - 70);
+  playButton.size(400, 200);
+  playButton.mousePressed(startGame1);
+
+  // About Button
+  aboutButton = createImg("Massets/malaybtn.png", "About");
+  aboutButton.position(width / 2 - 180, height / 2 - 70);
+  aboutButton.size(400, 200);
+  aboutButton.mousePressed(startGame2);
+
+
+  // Credits Button
+  creditsButton = createImg("Massets/csbtn.png", "Credits");
+  creditsButton.position(width / 2 + 330, height / 2 - 70);
+  creditsButton.size(400, 200);
+  creditsButton.mousePressed(startGame3);
+
+  credisButton = createImg("Massets/minigamebtn.png", "Credits");
+  credisButton.position(width / 2 - 480, height / 2 + 150);
+  credisButton.size(400, 200);
+  credisButton.mousePressed(startGame4);
+
+
+  aboutsButton = createImg("Massets/backbtn.png", "About");
+  aboutsButton.position(width / 2 + 80, height / 2 + 150);
+  aboutsButton.size(400, 200);
+  aboutsButton.mousePressed(startGame5);
+
+
+}
+
+function draw() {
+  background(bg);
+
+  // Title
+
+  // Popup Window
+  if (popupVisible) {
+    fill(0, 150);
+    rect(width / 2 - 350, height / 2 - 120, 700, 300, 20);
+    fill(255);
+    textSize(30);
+    text(popupText, width / 2, height / 2);
+  }
+}
+
+// Start Game Function
+function startGame1() {
+    alert("Going to subject...");
+    setTimeout(() => {
+      window.location.href = "AQmaths.html"; 
+    }, 100);
+}
+
+function startGame2() {
+    alert("Going to subject...");
+    setTimeout(() => {
+      window.location.href = "AQBM.html"; 
+    }, 100);
+}
+
+function startGame3() {
+    alert("Going to subject...");
+    setTimeout(() => {
+      window.location.href = "AQCS.html"; 
+    }, 100);
+}
+
+function startGame4() {
+    setTimeout(() => {
+      window.location.href = "minigame.html"; 
+    }, 100);
+}
+
+function startGame5() {
+    setTimeout(() => {
+      window.location.href = "AQgamehs.html"; 
+    }, 100);
+}
+
+
+
+// Show popup
+function showPopup(txt) {
+  popupText = txt;
+  popupVisible = true;
+  playButton.hide();
+  aboutButton.hide();
+  creditsButton.hide();
+  popupTimer = millis(); 
+}
+
+// Fix Popup Stuck Issue - Close on Click
+function mousePressed() {
+  if (popupVisible && millis() - popupTimer > 500) {
+    popupVisible = false;
+    playButton.show();
+    aboutButton.show();
+    creditsButton.show();
+    
+  }
+
+  // Fix Music Not Playing - Start on Click
+  if (!musicStarted) {
+    userStartAudio(); // Required for browsers to allow sound
+    bgMusic.setVolume(1);
+    bgMusic.loop();
+    musicStarted = true;
+  }
+}
+
+const frames = [
+    "kylie1.png", "kylie2.png", "allen1.png", "allen2.png"
+  ]; // Add your frame images
+  let currentFrame = 0;
+  let lastUpdateTime = 0;
+  const frameSpeed = 100; // Milliseconds per frame
+  
+  function animate(time) {
+    if (time - lastUpdateTime > frameSpeed) {
+      lastUpdateTime = time;
+      currentFrame = (currentFrame + 1) % frames.length;
+      
+      let img = new Image();
+      img.src = frames[currentFrame];
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 50, 50, 100, 100); // Adjust position & size
+      };
+    }
+  
+    requestAnimationFrame(animate);
+  }
+  
+  // Start animation
+  requestAnimationFrame(animate);
+
+    </script>
+</body>
+</html>
