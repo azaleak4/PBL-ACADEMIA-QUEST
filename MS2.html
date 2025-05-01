@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cutscene Viewer with Styled Dialogue</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    #background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    #background.visible {
+      opacity: 1;
+    }
+
+    #characters {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .character {
+      position: absolute;
+      bottom: 0;
+      height: 70%;
+      transition: transform 0.3s ease;
+    }
+
+    #char-left { left: 5%; }
+    #char-right { right: 5%; }
+
+    /* BOUNCE animation */
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      30%  { transform: translateY(-25px); }
+      50%  { transform: translateY(0); }
+      70%  { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+
+    .bounce {
+      animation: bounce 0.6s ease;
+    }
+
+    #dialogue-box {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 900px;
+      background: rgba(20, 20, 20, 0.85);
+      color: #fff;
+      border: 2px solid #ffffff33;
+      border-radius: 15px;
+      padding: 20px 30px;
+      box-shadow: 0 0 20px #000000aa;
+      z-index: 2;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    #dialogue-box:hover {
+      background: rgba(30, 30, 30, 0.95);
+      border-color: #ffffff55;
+    }
+
+    #name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #ffd369;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    #text {
+      color: #e0e0e0;
+    }
+
+    #scene-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 3;
+      font-size: 14px;
+    }
+
+    #continue-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+      animation: blink 1s infinite;
+      opacity: 0.7;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 0.2; }
+    }
+
+    @keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-30px); }
+  60%  { transform: translateY(0); }
+  100% { transform: translateY(-15px); }
+    }
+
+  .fadeOut {
+  animation: fadeOutAnim 2s forwards;
+}
+
+@keyframes fadeOutAnim {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+
+.character.bounce {
+  animation: bounce 0.6s ease;
+}
+
+  </style>
+</head>
+<body>
+  <div id="scene">
+    <div id="scene-label"></div>
+    <img id="background" src="" alt="Background">
+    <div id="characters">
+      <img id="char-left" class="character" src="" alt="Left Character">
+      <img id="char-right" class="character" src="" alt="Right Character">
+    </div>
+    <div id="dialogue-box" onclick="nextLine()">
+      <div id="name"></div>
+      <div id="text"></div>
+      <div id="continue-indicator">▶️</div>
+    </div>
+  </div>
+
+
+<script>
+    
+    const cutscene = [
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "yay! we got to the next room! It looks a bit harder than before, but i'll keep going"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "This is absolutely ez, 16!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Are you sure about that smarty?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Isn't it right? 7+9 is 16"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Look carefully, there's a negative sign"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Wait, it is. Then what is the answer?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "First, learn about basic integers, they are whole numbers that could either be positive or negative, Decimals and fractions work the same, but they are not called integers, they're rational numbers"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "To answer questions like that, remember: if positive number is bigger than negative, it works like you're subtracting it from the postive number, meanwhile if the negative number is bigger, ignore the negative sign, and subtract the positive number from the negative one, put negative sign infront of the leftovers and ta-daaaa"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Example: -6+10, just subtract 6 from 10 and get the answer, meanwhile something like -9+3 would be -6, because you subtact the postive from the negative (when negative number is bigger), dont forget the signs"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Alright... but how about when negative meets negative?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "when you see negatives meet, all you gotta do is ignore the negative signs first. Add both of the numbers, then add back the negative sign, that's all!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Example: -5-4, ignore sign, add them both, add the sign back, you'll get -9."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "If i use that at a number line, it makes sense!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "good then"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Let's proceed!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Huh, what is x?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "x is a variable. It means it's an unknown value, it could be anything, negative, positive, fractions and so on. "
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "The numbers right beside x is called a coefficient, it's like how many x is there (multiples). To add and subtract, you'll need like terms. It means when a number, variable, or a mixed one is alike, you can add a single number with a number, but not with a variable or mixed, same situation happens with others"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Like terms must mean like same type, eg: 3 with 5 (numbers/integer), x with x (variables), 3x with 7x (mixed). x is not equal to any other variable, because they have different values."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "meanwhile multiples or divisions of it doesn't nescessarily need it to be like terms, if x is multiplied by y, it will just become xy (x times y)"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "adding mix numbers and variables with their like terms are easy, let's say 6x+4x, just add 6 and 4 together and put it besides x, done! (x alone is equal to 1x)"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Then the result must be "
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Good job!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Thanks"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "This one is a bit wierd.. how do i find x?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Easy, 2x +3 =10 as an example, your goal is to make x alone, by moving everything to the opposite side, the side after the equal sign. if you move it, operations will change, from positive to negative when moved, multiples to divisions and the other way around."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Then... if I try to  isolate x, I will get as the answer?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Yes!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Im understanding more now, and i found another clue! It says in a ratio of 3:4, what is the second part if the first one's 30?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Look at it, you see that 3 becames 30 right? what is multiplied by 3 to make it 30? "
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "10?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Yes, so do the same thing with 4, or rewrite the ratio as a fraction, (a:b is equal to a/b) and multiply both numerator and denominator with 10 "
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "hmm.. 40!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Good! Now let's find the answer to this next clue."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "It says what is the sum of angles in a triangle?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "There are many formulas for it, but I'll tell you the two most important ones first"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Triangles, closed shape with three sides will ALWAYS have the sum of angles as 180, while quadrilaterals, closed shape with 4 sides, will ALWAYS have 360 as their sum of angles"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "That is cool!"
+      },
+     
+    ];
+
+  const backgroundEl = document.getElementById("background");
+  const charLeft = document.getElementById("char-left");
+  const charRight = document.getElementById("char-right");
+  const sceneLabel = document.getElementById("scene-label");
+  const dialogueBox = document.getElementById("dialogue-box");
+  const nameEl = document.getElementById("name");
+  const textEl = document.getElementById("text");
+
+  let index = 0;
+  let isTyping = false;
+  let typingTimeout;
+
+  function showScene(scene) {
+    backgroundEl.classList.remove("visible");
+    setTimeout(() => {
+      backgroundEl.src = scene.background;
+      backgroundEl.onload = () => backgroundEl.classList.add("visible");
+
+      charLeft.src = scene.characters.left;
+      charRight.src = scene.characters.right;
+
+      // Bouncing effect for speaker
+      if (scene.name === "Calculo") {
+        charRight.classList.add("bounce");
+        setTimeout(() => charRight.classList.remove("bounce"), 600);
+      } else if (scene.name === "Allen") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }else if (scene.name ===  " A calculator..?") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }
+
+      sceneLabel.textContent = scene.scene;
+      nameEl.textContent = scene.name;
+      textEl.textContent = "";
+      dialogueBox.style.display = "block";
+
+      typeText(scene.text);
+    }, 400);
+  }
+
+  function typeText(text) {
+    let charIndex = 0;
+    isTyping = true;
+    textEl.textContent = "";
+
+    function typeNextChar() {
+      if (charIndex < text.length) {
+        textEl.textContent += text.charAt(charIndex);
+        charIndex++;
+        typingTimeout = setTimeout(typeNextChar, 25); // typing speed
+      } else {
+        isTyping = false;
+      }
+    }
+
+    typeNextChar();
+  }
+
+  function nextLine() {
+    if (isTyping) {
+      clearTimeout(typingTimeout);
+      textEl.textContent = cutscene[index].text;
+      isTyping = false;
+      return;
+    }
+
+index++;
+    if (index < cutscene.length) {
+      showScene(cutscene[index]);
+    } else {
+      dialogueBox.style.display = "none";
+      backgroundEl.classList.add("fadeOut");
+    }
+  }
+
+  // Start with the first scene
+  showScene(cutscene[index]);
+
+  </script>
+</body>
+</html>

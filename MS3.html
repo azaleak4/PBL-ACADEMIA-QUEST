@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cutscene Viewer with Styled Dialogue</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    #background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    #background.visible {
+      opacity: 1;
+    }
+
+    #characters {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .character {
+      position: absolute;
+      bottom: 0;
+      height: 70%;
+      transition: transform 0.3s ease;
+    }
+
+    #char-left { left: 5%; }
+    #char-right { right: 5%; }
+
+    /* BOUNCE animation */
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      30%  { transform: translateY(-25px); }
+      50%  { transform: translateY(0); }
+      70%  { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+
+    .bounce {
+      animation: bounce 0.6s ease;
+    }
+
+    #dialogue-box {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 900px;
+      background: rgba(20, 20, 20, 0.85);
+      color: #fff;
+      border: 2px solid #ffffff33;
+      border-radius: 15px;
+      padding: 20px 30px;
+      box-shadow: 0 0 20px #000000aa;
+      z-index: 2;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    #dialogue-box:hover {
+      background: rgba(30, 30, 30, 0.95);
+      border-color: #ffffff55;
+    }
+
+    #name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #ffd369;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    #text {
+      color: #e0e0e0;
+    }
+
+    #scene-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 3;
+      font-size: 14px;
+    }
+
+    #continue-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+      animation: blink 1s infinite;
+      opacity: 0.7;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 0.2; }
+    }
+
+    @keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-30px); }
+  60%  { transform: translateY(0); }
+  100% { transform: translateY(-15px); }
+    }
+
+  .fadeOut {
+  animation: fadeOutAnim 2s forwards;
+}
+
+@keyframes fadeOutAnim {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+
+.character.bounce {
+  animation: bounce 0.6s ease;
+}
+
+  </style>
+</head>
+<body>
+  <div id="scene">
+    <div id="scene-label"></div>
+    <img id="background" src="" alt="Background">
+    <div id="characters">
+      <img id="char-left" class="character" src="" alt="Left Character">
+      <img id="char-right" class="character" src="" alt="Right Character">
+    </div>
+    <div id="dialogue-box" onclick="nextLine()">
+      <div id="name"></div>
+      <div id="text"></div>
+      <div id="continue-indicator">▶️</div>
+    </div>
+  </div>
+
+
+<script>
+    
+    const cutscene = [
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "Last room, here we go!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "what are these things- it looks.. complicated"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculator",
+        text: "What complicated? this is really easy"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "For you"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Uhm anyway, this thing is called a quadratic equation. if you try to find x, you will have two or one answer"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "To find the values of x, we can use factorisation. Look at this method here. You will put the the term with x squared at the most right, then the integer beside it, after the vertical line, put the x with coefficient."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculator",
+        text: "the side before the vertical line is where you will multiply , the other is just adding things. The logic is what times what is equal to the number you placed,"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculator",
+        text: "let's say x^2, what is multiplied by what makes it? x with x! Then what times what is 6? 2 with 3 or neagtive version of them. At the other side, you will add the combination of numbers you've made from the other side. Like this one, -3 x -2 is 6, combine it with x, at the other side, add -3x and -2x together, and you're done"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: " Put the brackets beside the x on top with -3  and brackets for the bottom x with -2, It will become (x-3)(x-2)"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "That is nice! Now that we find the clues, I can escape the room now!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Yea! Nice guiding you and becoming your literal ChatGPT"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Uhm Thanks!"
+      },
+     
+    ];
+
+  const backgroundEl = document.getElementById("background");
+  const charLeft = document.getElementById("char-left");
+  const charRight = document.getElementById("char-right");
+  const sceneLabel = document.getElementById("scene-label");
+  const dialogueBox = document.getElementById("dialogue-box");
+  const nameEl = document.getElementById("name");
+  const textEl = document.getElementById("text");
+
+  let index = 0;
+  let isTyping = false;
+  let typingTimeout;
+
+  function showScene(scene) {
+    backgroundEl.classList.remove("visible");
+    setTimeout(() => {
+      backgroundEl.src = scene.background;
+      backgroundEl.onload = () => backgroundEl.classList.add("visible");
+
+      charLeft.src = scene.characters.left;
+      charRight.src = scene.characters.right;
+
+      // Bouncing effect for speaker
+      if (scene.name === "Calculo") {
+        charRight.classList.add("bounce");
+        setTimeout(() => charRight.classList.remove("bounce"), 600);
+      } else if (scene.name === "Allen") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }else if (scene.name ===  " A calculator..?") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }
+
+      sceneLabel.textContent = scene.scene;
+      nameEl.textContent = scene.name;
+      textEl.textContent = "";
+      dialogueBox.style.display = "block";
+
+      typeText(scene.text);
+    }, 400);
+  }
+
+  function typeText(text) {
+    let charIndex = 0;
+    isTyping = true;
+    textEl.textContent = "";
+
+    function typeNextChar() {
+      if (charIndex < text.length) {
+        textEl.textContent += text.charAt(charIndex);
+        charIndex++;
+        typingTimeout = setTimeout(typeNextChar, 25); // typing speed
+      } else {
+        isTyping = false;
+      }
+    }
+
+    typeNextChar();
+  }
+
+  function nextLine() {
+    if (isTyping) {
+      clearTimeout(typingTimeout);
+      textEl.textContent = cutscene[index].text;
+      isTyping = false;
+      return;
+    }
+
+index++;
+    if (index < cutscene.length) {
+      showScene(cutscene[index]);
+    } else {
+      dialogueBox.style.display = "none";
+      backgroundEl.classList.add("fadeOut");
+    }
+  }
+
+  // Start with the first scene
+  showScene(cutscene[index]);
+
+  </script>
+</body>
+</html>

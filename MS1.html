@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cutscene Viewer with Styled Dialogue</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    #background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    #background.visible {
+      opacity: 1;
+    }
+
+    #characters {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .character {
+      position: absolute;
+      bottom: 0;
+      height: 70%;
+      transition: transform 0.3s ease;
+    }
+
+    #char-left { left: 5%; }
+    #char-right { right: 5%; }
+
+    /* BOUNCE animation */
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      30%  { transform: translateY(-25px); }
+      50%  { transform: translateY(0); }
+      70%  { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+
+    .bounce {
+      animation: bounce 0.6s ease;
+    }
+
+    #dialogue-box {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 900px;
+      background: rgba(20, 20, 20, 0.85);
+      color: #fff;
+      border: 2px solid #ffffff33;
+      border-radius: 15px;
+      padding: 20px 30px;
+      box-shadow: 0 0 20px #000000aa;
+      z-index: 2;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    #dialogue-box:hover {
+      background: rgba(30, 30, 30, 0.95);
+      border-color: #ffffff55;
+    }
+
+    #name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #ffd369;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    #text {
+      color: #e0e0e0;
+    }
+
+    #scene-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 10px;
+      border-radius: 5px;
+      z-index: 3;
+      font-size: 14px;
+    }
+
+    #continue-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+      animation: blink 1s infinite;
+      opacity: 0.7;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 0.2; }
+    }
+
+    @keyframes bounce {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-30px); }
+  60%  { transform: translateY(0); }
+  100% { transform: translateY(-15px); }
+    }
+
+  .fadeOut {
+  animation: fadeOutAnim 2s forwards;
+}
+
+@keyframes fadeOutAnim {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+
+.character.bounce {
+  animation: bounce 0.6s ease;
+}
+
+  </style>
+</head>
+<body>
+  <div id="scene">
+    <div id="scene-label"></div>
+    <img id="background" src="" alt="Background">
+    <div id="characters">
+      <img id="char-left" class="character" src="" alt="Left Character">
+      <img id="char-right" class="character" src="" alt="Right Character">
+    </div>
+    <div id="dialogue-box" onclick="nextLine()">
+      <div id="name"></div>
+      <div id="text"></div>
+      <div id="continue-indicator">▶️</div>
+    </div>
+  </div>
+
+
+<script>
+    
+    const cutscene = [
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "Wait- why am i here again?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "Oh right, I joined an escape room activity! I should proceed to find the clues hidden.."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "Hold on, thats the first clue! This is easy, the answer is.....  !  Now a few more to find. "
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent1.png"  },
+        name: "Allen",
+        text: "Huh what is this? Im not that good at math. I need help"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: " A calculator..?",
+        text: "Then I'll be your guide!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "What the- what in the world are you?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: " A calculator..?",
+        text: "Isn't it obvious? Im a talkin calculator! Call me Calculo"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Well, Hi then I guess"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Ok, let's proceed. So you see here, the fraction is 2/5 of 30, you can solve it using two ways"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Either you multiply the numerator with 30, then divide by 2, OR cancel the 30 with 5, which means you are dividing them, leaving you with 2 and 6, multiply them. At the end, you're going to get the same answer,12! It's easier by just using calculators"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Oh! that's how you do it! Im gonna find more clues"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Here is another one! 20% of 50. Which means i will change the percentage from 20% to 20/100 and do the same thing right?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Way on to go! You are correct, but there is another and simpler way to do it other than the method you used and without calculators."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Tell me em!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "So you got 20% right? change it into decimal points, just divide 20 with 100, you will get 0.20/0.2, now multiply it with 50"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "The answer would be 10."
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "You're on the right track"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent.png"  },
+        name: "Allen",
+        text: "This one is a piece of cake! Perimeter is the total of the lengths of the sides of a shape, Like an outline. The opposite sides of a rectangle are the same, which means I'll get 16+16+4+4.... 40!"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/transparent.png"  },
+        name: "Allen",
+        text: "What is this.. changing units? How though. Calculo, can you help me?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Sure! so have you heard of prefixes? These are used to represent multiples or fractions of base units like meter, liter, or gram. Here is a list! remember the index"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Allen",
+        text: "Ooh, I remembered some now, But how do i find a milliliter value from a liter?"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "When you are coverting units from small to big, you will divide, meanwhile the opposite move would be multiply, the number you are multiplying/dividing with  is the prefx"
+      },
+      {
+        background: "https://cdna.artstation.com/p/assets/images/images/045/996/554/large/aome-art-classroom-blend-copy.jpg?1644043729",
+        characters: { left: "Massets/spriteb1.png", right: "Massets/calculo.png"  },
+        name: "Calculo",
+        text: "Let's say, from 20grams to kilo grams, because the prefix of kilo is 1000, you will divide 20(grams) with 1000, giving you 0.02 as the kilograms, multiply it instead to go from bigger to small"
+      },
+     
+    ];
+
+  const backgroundEl = document.getElementById("background");
+  const charLeft = document.getElementById("char-left");
+  const charRight = document.getElementById("char-right");
+  const sceneLabel = document.getElementById("scene-label");
+  const dialogueBox = document.getElementById("dialogue-box");
+  const nameEl = document.getElementById("name");
+  const textEl = document.getElementById("text");
+
+  let index = 0;
+  let isTyping = false;
+  let typingTimeout;
+
+  function showScene(scene) {
+    backgroundEl.classList.remove("visible");
+    setTimeout(() => {
+      backgroundEl.src = scene.background;
+      backgroundEl.onload = () => backgroundEl.classList.add("visible");
+
+      charLeft.src = scene.characters.left;
+      charRight.src = scene.characters.right;
+
+      // Bouncing effect for speaker
+      if (scene.name === "Calculo") {
+        charRight.classList.add("bounce");
+        setTimeout(() => charRight.classList.remove("bounce"), 600);
+      } else if (scene.name === "Allen") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }else if (scene.name ===  " A calculator..?") {
+        charLeft.classList.add("bounce");
+        setTimeout(() => charLeft.classList.remove("bounce"), 600);
+      }
+
+      sceneLabel.textContent = scene.scene;
+      nameEl.textContent = scene.name;
+      textEl.textContent = "";
+      dialogueBox.style.display = "block";
+
+      typeText(scene.text);
+    }, 400);
+  }
+
+  function typeText(text) {
+    let charIndex = 0;
+    isTyping = true;
+    textEl.textContent = "";
+
+    function typeNextChar() {
+      if (charIndex < text.length) {
+        textEl.textContent += text.charAt(charIndex);
+        charIndex++;
+        typingTimeout = setTimeout(typeNextChar, 25); // typing speed
+      } else {
+        isTyping = false;
+      }
+    }
+
+    typeNextChar();
+  }
+
+  function nextLine() {
+    if (isTyping) {
+      clearTimeout(typingTimeout);
+      textEl.textContent = cutscene[index].text;
+      isTyping = false;
+      return;
+    }
+
+index++;
+    if (index < cutscene.length) {
+      showScene(cutscene[index]);
+    } else {
+      dialogueBox.style.display = "none";
+      backgroundEl.classList.add("fadeOut");
+    }
+  }
+
+  // Start with the first scene
+  showScene(cutscene[index]);
+
+  </script>
+</body>
+</html>
